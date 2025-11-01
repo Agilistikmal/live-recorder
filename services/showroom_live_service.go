@@ -13,6 +13,10 @@ import (
 type ShowroomLiveService struct {
 }
 
+func NewShowroomLiveService() *ShowroomLiveService {
+	return &ShowroomLiveService{}
+}
+
 func (s *ShowroomLiveService) GetLives(id string) ([]*models.Live, error) {
 	resp, err := http.Get("https://www.showroom-live.com/api/live/onlives")
 	if err != nil {
