@@ -2,6 +2,11 @@ package models
 
 import "time"
 
+const (
+	PlatformShowroom = "showroom"
+	PlatformIDN      = "idn"
+)
+
 type Live struct {
 	ID           string        `json:"id"`
 	Streamer     *LiveStreamer `json:"streamer"`
@@ -19,4 +24,10 @@ type LiveStreamer struct {
 	Name          string `json:"name"`
 	FollowerCount int    `json:"follower_count"`
 	ImageUrl      string `json:"image_url"`
+}
+
+type LiveQuery struct {
+	Platform             string `json:"platform"`
+	StreamerUsernameLike string `json:"streamer_username_like"`
+	TitleLike            string `json:"title_like"`
 }

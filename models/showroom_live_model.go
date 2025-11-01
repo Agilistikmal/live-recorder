@@ -47,7 +47,7 @@ func (s *ShowroomLive) ToLive() *Live {
 			ImageUrl:      s.ImageSquare,
 		},
 		Title:        s.Telop,
-		Platform:     "ShowroomLive",
+		Platform:     PlatformShowroom,
 		PlatformUrl:  fmt.Sprintf("https://showroom-live.com/r/%v", s.RoomUrlKey),
 		StreamingUrl: s.StreamingUrlList[0].Url,
 		ImageUrl:     s.ImageSquare,

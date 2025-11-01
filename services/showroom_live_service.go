@@ -53,6 +53,8 @@ func (s *ShowroomLiveService) GetLives() ([]*models.Live, error) {
 	liveList := make([]*models.Live, 0)
 	for _, onLive := range showroomResponses.OnLives {
 		for _, showroomLive := range onLive.Lives {
+			// Filter lives by liveQuery
+			// ...
 			if showroomLive.StreamingUrlList == nil || len(showroomLive.StreamingUrlList) < 1 {
 				continue
 			}

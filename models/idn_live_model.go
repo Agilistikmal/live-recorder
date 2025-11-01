@@ -34,7 +34,7 @@ func (i *IDNLive) ToLive() *Live {
 			FollowerCount: i.Creator.FollowerCount,
 		},
 		Title:        i.Title,
-		Platform:     "IDNLive",
+		Platform:     PlatformIDN,
 		PlatformUrl:  i.PlaybackUrl,
 		StreamingUrl: i.PlaybackUrl,
 		ImageUrl:     i.ImageUrl,
