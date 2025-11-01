@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/agilistikmal/live-recorder/models"
 )
@@ -17,7 +16,7 @@ func NewShowroomLiveService() *ShowroomLiveService {
 	return &ShowroomLiveService{}
 }
 
-func (s *ShowroomLiveService) GetLives(id string) ([]*models.Live, error) {
+func (s *ShowroomLiveService) GetLives() ([]*models.Live, error) {
 	resp, err := http.Get("https://www.showroom-live.com/api/live/onlives")
 	if err != nil {
 		return nil, err
@@ -33,13 +32,7 @@ func (s *ShowroomLiveService) GetLives(id string) ([]*models.Live, error) {
 	liveList := make([]*models.Live, 0)
 	for _, onLive := range showroomResponses.OnLives {
 		for _, showroomLive := range onLive.Lives {
-			live := showroomLive.ToLive()
-			streamingUrl, err := s.GetStreamingUrl(strconv.Itoa(showroomLive.RoomID))
-			if err != nil {
-				return nil, err
-			}
-			live.StreamingUrl = streamingUrl
-			liveList = append(liveList, live)
+			liveList = append(liveList, showroomLive.ToLive())
 		}
 	}
 
