@@ -39,9 +39,9 @@ type ShowroomStreamingUrl struct {
 func (s *ShowroomLive) ToLive() *Live {
 	startedAt := time.Unix(int64(s.StartedAt), 0)
 	return &Live{
-		ID: s.RoomUrlKey,
+		ID: fmt.Sprintf("%v", s.RoomID),
 		Streamer: &LiveStreamer{
-			Username:      s.MainName,
+			Username:      s.RoomUrlKey,
 			Name:          s.MainName,
 			FollowerCount: s.FollowerNum,
 			ImageUrl:      s.ImageSquare,

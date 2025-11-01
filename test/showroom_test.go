@@ -1,0 +1,41 @@
+package test
+
+import (
+	"testing"
+	"time"
+
+	"github.com/agilistikmal/live-recorder/services"
+	"github.com/agilistikmal/live-recorder/utils"
+)
+
+func TestShowroomLiveService_Download(t *testing.T) {
+	showroomLiveService := services.NewShowroomLiveService()
+	showroomLives, err := showroomLiveService.GetLives()
+	if err != nil {
+		t.Fatalf("Failed to get showroom lives: %v", err)
+	}
+
+	t.Logf("showroom lives: %v", len(showroomLives))
+	if len(showroomLives) < 1 {
+		t.Fatalf("No showroom lives found")
+	}
+
+	streamingUrl, err := showroomLiveService.GetStreamingUrl(showroomLives[0].ID)
+	if err != nil {
+		t.Fatalf("Failed to get streaming url: %v", err)
+	}
+
+	t.Logf("streaming url: %v", streamingUrl)
+
+	t.Logf("Downloading 5 seconds HLS...")
+	go func() {
+		err = utils.DownloadHLS(streamingUrl, "showroom_test_result.mp4")
+		if err != nil {
+			t.Logf("Failed to download HLS: %v", err)
+		}
+	}()
+
+	time.Sleep(5 * time.Second)
+
+	t.Logf("Download stopped")
+}
