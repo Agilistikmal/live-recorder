@@ -1,6 +1,7 @@
 package test
 
 import (
+	"os"
 	"testing"
 	"time"
 
@@ -9,6 +10,8 @@ import (
 )
 
 func TestShowroomLiveService_Download(t *testing.T) {
+	outputPath := "showroom_test_result.mp4"
+	defer os.Remove(outputPath)
 	showroomLiveService := services.NewShowroomLiveService()
 	showroomLives, err := showroomLiveService.GetLives()
 	if err != nil {
@@ -29,7 +32,7 @@ func TestShowroomLiveService_Download(t *testing.T) {
 
 	t.Logf("Downloading 5 seconds HLS...")
 	go func() {
-		err = utils.DownloadHLS(streamingUrl, "showroom_test_result.mp4")
+		err = utils.DownloadHLS(streamingUrl, outputPath)
 		if err != nil {
 			t.Logf("Failed to download HLS: %v", err)
 		}
