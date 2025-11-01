@@ -6,7 +6,8 @@ type Live struct {
 	ID           string        `json:"id"`
 	Streamer     *LiveStreamer `json:"streamer"`
 	Title        string        `json:"title"`
-	OriginalUrl  string        `json:"original_url"`
+	Platform     string        `json:"platform"`
+	PlatformUrl  string        `json:"platform_url"`
 	StreamingUrl string        `json:"streaming_url"`
 	ImageUrl     string        `json:"image_url"`
 	ViewCount    int           `json:"view_count"`

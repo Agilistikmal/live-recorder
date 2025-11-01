@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type ShowroomResponses struct {
 	OnLives []ShowroomOnLive `json:"onlives"`
@@ -44,7 +47,8 @@ func (s *ShowroomLive) ToLive() *Live {
 			ImageUrl:      s.ImageSquare,
 		},
 		Title:        s.Telop,
-		OriginalUrl:  s.StreamingUrlList[0].Url,
+		Platform:     "ShowroomLive",
+		PlatformUrl:  fmt.Sprintf("https://showroom-live.com/r/%v", s.RoomUrlKey),
 		StreamingUrl: s.StreamingUrlList[0].Url,
 		ImageUrl:     s.ImageSquare,
 		ViewCount:    s.ViewNum,
