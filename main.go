@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"sync"
 
 	"github.com/agilistikmal/live-recorder/models"
 	"github.com/agilistikmal/live-recorder/services"
@@ -11,7 +12,10 @@ import (
 )
 
 func main() {
-	liveService := services.NewLiveService()
+	logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetFormatter(&logrus.JSONFormatter{})
+
+	watchMode := flag.Bool("watch", false, "Watch for new lives")
 
 	platform := flag.String("p", "", "Platform to record (showroom, idn)")
 	query := flag.String("q", "", "Query to search for lives")
@@ -37,22 +41,53 @@ func main() {
 		liveQuery.Platform = *platform
 	}
 
-	lives, err := liveService.GetLives(liveQuery)
-	if err != nil {
-		logrus.Fatalf("Failed to get lives: %v", err)
-	}
-
-	logrus.Infof("lives: %v", len(lives))
-	if len(lives) < 50 {
-		for _, live := range lives {
-			streamingUrl, err := liveService.GetStreamingUrl(live)
-			if err != nil {
-				logrus.Fatalf("Failed to get streaming url: %v", err)
-			}
-			logrus.Infof("Starting to record: %s %s (%s)", live.Platform, live.Streamer.Username, streamingUrl)
-			go utils.DownloadHLS(streamingUrl, fmt.Sprintf("./tmp/%v.mp4", live.Streamer.Username))
-		}
+	liveService := services.NewLiveService()
+	if *watchMode {
+		watchService := services.NewWatchService(liveService, liveQuery)
+		watchService.StartWatchMode()
+	} else {
+		runOnce(liveService, liveQuery)
 	}
 
 	select {}
+}
+
+func runOnce(liveService *services.LiveService, liveQuery *models.LiveQuery) {
+	logrus.Info("Once mode started")
+	lives, err := liveService.GetLives(liveQuery)
+	if err != nil {
+		logrus.Errorf("Failed to get lives: %v", err)
+		return
+	}
+
+	logrus.Infof("Found %d lives", len(lives))
+
+	if len(lives) == 0 {
+		logrus.Info("No lives found")
+		return
+	}
+
+	wg := sync.WaitGroup{}
+	for _, live := range lives {
+		wg.Add(1)
+		streamingUrl, err := liveService.GetStreamingUrl(live)
+		if err != nil {
+			logrus.Errorf("Failed to get streaming url: %v", err)
+			return
+		}
+
+		go func() {
+			defer wg.Done()
+			logrus.Infof("Recording started for %s", live.Streamer.Username)
+
+			downloadInfo := utils.DownloadHLS(streamingUrl, fmt.Sprintf("./tmp/%s/%s.mp4", live.Platform, live.Streamer.Username))
+			if downloadInfo == nil {
+				logrus.Errorf("Failed to download HLS: %v", err)
+				return
+			}
+			logrus.Infof("Download completed: %v", downloadInfo)
+		}()
+	}
+	wg.Wait()
+	logrus.Info("All downloads completed")
 }

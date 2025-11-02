@@ -3,7 +3,6 @@ package test
 import (
 	"os"
 	"testing"
-	"time"
 
 	"github.com/agilistikmal/live-recorder/services"
 	"github.com/agilistikmal/live-recorder/utils"
@@ -32,13 +31,10 @@ func TestShowroomLiveService_Download(t *testing.T) {
 
 	t.Logf("Downloading 5 seconds HLS...")
 	go func() {
-		err = utils.DownloadHLS(streamingUrl, outputPath)
-		if err != nil {
-			t.Logf("Failed to download HLS: %v", err)
+		downloadInfo := utils.DownloadHLS(streamingUrl, outputPath)
+		if downloadInfo == nil {
+			t.Log("Failed to download HLS")
 		}
+		t.Logf("Download completed: %v", downloadInfo)
 	}()
-
-	time.Sleep(5 * time.Second)
-
-	t.Logf("Download stopped")
 }
