@@ -31,7 +31,7 @@ func TestShowroomLiveService_Download(t *testing.T) {
 
 	t.Logf("Downloading 5 seconds HLS...")
 	go func() {
-		downloadInfo := utils.DownloadHLS(streamingUrl, outputPath)
+		downloadInfo := utils.DownloadHLS(streamingUrl, &outputPath)
 		if downloadInfo == nil {
 			t.Log("Failed to download HLS")
 		}

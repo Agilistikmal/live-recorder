@@ -82,13 +82,13 @@ func (ws *WatchService) checkAndStartRecording() {
 			}()
 
 			filename := fmt.Sprintf("./tmp/%s/%s.mp4", l.Platform, l.Streamer.Username)
-			downloadInfo := utils.DownloadHLS(streamingUrl, filename)
+			downloadInfo := utils.DownloadHLS(streamingUrl, &filename)
 
 			if downloadInfo == nil {
 				logrus.Errorf("Recording failed for %s", l.Streamer.Username)
 				return
 			}
-			logrus.Info("Download completed", l.Streamer.Username, downloadInfo)
+			logrus.WithFields(downloadInfo).Infof("Download completed for %s", l.Streamer.Username)
 		}(*live)
 	}
 }

@@ -3,7 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 
 	"github.com/agilistikmal/live-recorder/models"
 	"github.com/agilistikmal/live-recorder/services"
@@ -45,11 +48,16 @@ func main() {
 	if *watchMode {
 		watchService := services.NewWatchService(liveService, liveQuery)
 		watchService.StartWatchMode()
+
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+		logrus.Info("Application is running in Watch Mode. Waiting for signal to stop...")
+		<-quit
+
+		logrus.Info("Received stop signal. Exiting.")
 	} else {
 		runOnce(liveService, liveQuery)
 	}
-
-	select {}
 }
 
 func runOnce(liveService *services.LiveService, liveQuery *models.LiveQuery) {
@@ -80,12 +88,13 @@ func runOnce(liveService *services.LiveService, liveQuery *models.LiveQuery) {
 			defer wg.Done()
 			logrus.Infof("Recording started for %s", live.Streamer.Username)
 
-			downloadInfo := utils.DownloadHLS(streamingUrl, fmt.Sprintf("./tmp/%s/%s.mp4", live.Platform, live.Streamer.Username))
+			filename := fmt.Sprintf("./tmp/%s/%s.mp4", live.Platform, live.Streamer.Username)
+			downloadInfo := utils.DownloadHLS(streamingUrl, &filename)
 			if downloadInfo == nil {
 				logrus.Errorf("Failed to download HLS: %v", err)
 				return
 			}
-			logrus.Infof("Download completed: %v", downloadInfo)
+			logrus.WithFields(downloadInfo).Infof("Download completed for %s", live.Streamer.Username)
 		}()
 	}
 	wg.Wait()
