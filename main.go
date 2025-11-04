@@ -92,7 +92,6 @@ func runOnce(liveService *services.LiveService, liveQuery *models.LiveQuery) {
 			filename := fmt.Sprintf("./tmp/%s/%s.mp4", live.Platform, live.Streamer.Username)
 			downloadInfo := utils.DownloadHLS(streamingUrl, &filename)
 			if downloadInfo == nil {
-				logrus.Errorf("Failed to download HLS: %v", err)
 				return
 			}
 			logrus.WithFields(downloadInfo).Infof("Download completed for %s", live.Streamer.Username)

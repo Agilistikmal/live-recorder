@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"strings"
 
 	"github.com/agilistikmal/live-recorder/configs"
 	"github.com/agilistikmal/live-recorder/models"
@@ -97,9 +95,6 @@ func (s *IDNLiveService) GetLives() ([]*models.Live, error) {
 
 		for _, l := range idnResponses.Data.GetLivestreams {
 			if l.Status != "live" {
-				continue
-			}
-			if !strings.Contains(strings.ToUpper(l.Creator.Username), strings.ToUpper(os.Getenv("PREFIX"))) {
 				continue
 			}
 			lives = append(lives, l.ToLive())

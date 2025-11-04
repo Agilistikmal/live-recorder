@@ -64,6 +64,17 @@ func (s *LiveService) GetLives(liveQuery *models.LiveQuery) ([]*models.Live, err
 		}
 	}
 	wg.Wait()
+
+	// Remove duplicates
+	uniqueLives := make([]*models.Live, 0)
+	seen := make(map[string]bool)
+	for _, live := range lives {
+		if !seen[live.ID] {
+			seen[live.ID] = true
+			uniqueLives = append(uniqueLives, live)
+		}
+	}
+	lives = uniqueLives
 	return lives, nil
 }
 

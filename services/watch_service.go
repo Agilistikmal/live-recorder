@@ -31,18 +31,18 @@ func NewWatchService(ls *LiveService, q *models.LiveQuery) *WatchService {
 func (ws *WatchService) StartWatchMode() {
 	logrus.Info("Watch mode started")
 
-	ws.checkAndStartRecording()
+	ws.CheckAndStartRecording()
 
 	tickerDuration := time.Duration(rand.Intn(15)+15) * time.Second
 	ticker := time.NewTicker(tickerDuration)
 	defer ticker.Stop()
 	for range ticker.C {
 		logrus.Debug("Checking for new live streams...")
-		ws.checkAndStartRecording()
+		ws.CheckAndStartRecording()
 	}
 }
 
-func (ws *WatchService) checkAndStartRecording() {
+func (ws *WatchService) CheckAndStartRecording() {
 	lives, err := ws.liveService.GetLives(ws.query)
 	if err != nil {
 		logrus.Errorf("Failed to get lives: %v", err)

@@ -2,7 +2,6 @@ package services
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -82,7 +81,7 @@ func (s *ShowroomLiveService) GetStreamingUrl(roomId string) (string, error) {
 	}
 
 	if len(srStreamingUrlResponses.StreamingUrlList) < 1 {
-		return "", errors.New("streaming url not found")
+		return "", fmt.Errorf("showroom streaming url not found for room id: %s", roomId)
 	}
 
 	return srStreamingUrlResponses.StreamingUrlList[1].Url, nil

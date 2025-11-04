@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -8,6 +9,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 func DownloadHLS(url string, outputPath *string) map[string]interface{} {
@@ -31,13 +34,18 @@ func DownloadHLS(url string, outputPath *string) map[string]interface{} {
 		outputPathTemp,
 	)
 
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
 	err := cmd.Run()
 	if err != nil {
+		logrus.Errorf("Failed to download HLS using ffmpeg: %v, stderr: %s", err, stderr.String())
 		return nil
 	}
 
 	tempFiles, err := filepath.Glob(fmt.Sprintf("%s_*.tmp%s", outputPathWithoutExt, ext))
 	if err != nil {
+		logrus.Errorf("Failed to get temp files: %v", err)
 		return nil
 	}
 
@@ -51,6 +59,7 @@ func DownloadHLS(url string, outputPath *string) map[string]interface{} {
 	}
 	err = os.WriteFile(listFilePath, []byte(listContent), 0644)
 	if err != nil {
+		logrus.Errorf("Failed to write list file: %v", err)
 		return nil
 	}
 
@@ -78,11 +87,13 @@ func DownloadHLS(url string, outputPath *string) map[string]interface{} {
 	}
 
 	if err != nil {
+		logrus.Errorf("Failed to join files: %v", err)
 		return nil
 	}
 
 	fileInfo, err := os.Stat(*outputPath)
 	if err != nil {
+		logrus.Errorf("Failed to get file info: %v", err)
 		return nil
 	}
 
