@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 
@@ -20,14 +21,14 @@ func main() {
 
 	watchMode := flag.Bool("watch", false, "Watch for new lives")
 
-	platform := flag.String("p", "", "Platform to record (showroom, idn)")
-	query := flag.String("q", "", "Query to search for lives")
+	platforms := flag.String("p", "", "Platforms to record (showroom,idn)")
+	query := flag.String("q", "", "Query to search for lives (streamer_username:*_JKT48,48_*;title:*JKT48*)")
 	url := flag.String("url", "", "URL to record (https://www.showroom-live.com/r/example)")
 
 	flag.Parse()
 
-	if *platform == "" {
-		logrus.Fatalf("Platform is required")
+	if *platforms == "" {
+		logrus.Fatalf("Platforms are required")
 	}
 
 	if *query == "" && *url == "" {
@@ -41,7 +42,7 @@ func main() {
 		if err != nil {
 			logrus.Fatalf("Failed to parse live query: %v", err)
 		}
-		liveQuery.Platform = *platform
+		liveQuery.Platforms = strings.Split(*platforms, ",")
 	}
 
 	liveService := services.NewLiveService()

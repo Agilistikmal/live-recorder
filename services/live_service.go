@@ -1,10 +1,12 @@
 package services
 
 import (
-	"errors"
+	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/agilistikmal/live-recorder/models"
+	"github.com/sirupsen/logrus"
 )
 
 type LiveService struct {
@@ -20,19 +22,49 @@ func NewLiveService() *LiveService {
 }
 
 func (s *LiveService) GetLives(liveQuery *models.LiveQuery) ([]*models.Live, error) {
-	switch liveQuery.Platform {
-	case models.PlatformShowroom:
-		lives, err := s.showroomLiveService.GetLives()
-		if err != nil {
-			return nil, err
+	lives := make([]*models.Live, 0)
+	wg := sync.WaitGroup{}
+	for _, platform := range liveQuery.Platforms {
+		switch platform {
+		case models.PlatformShowroom:
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				showroomLives, err := s.showroomLiveService.GetLives()
+				if err != nil {
+					logrus.Errorf("Failed to get showroom lives: %v", err)
+					return
+				}
+				filteredShowroomLives, err := s.ApplyFilter(showroomLives, liveQuery)
+				if err != nil {
+					logrus.Errorf("Failed to apply filter to showroom lives: %v", err)
+					return
+				}
+				lives = append(lives, filteredShowroomLives...)
+			}()
+		case models.PlatformIDN:
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				idnLives, err := s.idnLiveService.GetLives()
+				if err != nil {
+					logrus.Errorf("Failed to get idn lives: %v", err)
+					return
+				}
+				filteredIdnLives, err := s.ApplyFilter(idnLives, liveQuery)
+				if err != nil {
+					logrus.Errorf("Failed to apply filter to idn lives: %v", err)
+					return
+				}
+				lives = append(lives, filteredIdnLives...)
+			}()
+		default:
+			logrus.Errorf("Invalid platform: %s", platform)
+			return nil, fmt.Errorf("invalid platform: %s", platform)
 		}
-		return s.ApplyFilter(lives, liveQuery)
-	case models.PlatformIDN:
-		// TODO: Implement IDN live service
-		return nil, errors.New("idn platform not implemented")
-	default:
-		return nil, errors.New("invalid platform")
 	}
+	wg.Wait()
+	return lives, nil
 }
 
 func (s *LiveService) GetStreamingUrl(live *models.Live) (string, error) {
@@ -70,24 +102,21 @@ func (s *LiveService) CheckFilters(live *models.Live, liveQuery *models.LiveQuer
 	}
 
 	// Filter Streamer Username LIKE (Wildcard *)
-	if liveQuery.StreamerUsernameLike != "" {
-		filterValue := strings.ToLower(liveQuery.StreamerUsernameLike)
-
-		if !s.CheckWildcardFilter(liveUsernameLower, filterValue) {
-			return false
-		}
+	liveQueryStreamerUsernames := strings.SplitSeq(liveUsernameLower, ",")
+	streamerUsernameFilterPassed := false
+	for liveQueryStreamerUsername := range liveQueryStreamerUsernames {
+		streamerUsernameFilterPassed = streamerUsernameFilterPassed || s.CheckWildcardFilter(liveUsernameLower, liveQueryStreamerUsername)
 	}
 
 	// Filter Title LIKE (Wildcard *)
-	if liveQuery.TitleLike != "" {
-		filterValue := strings.ToLower(liveQuery.TitleLike)
-
-		if !s.CheckWildcardFilter(liveTitleLower, filterValue) {
-			return false
-		}
+	liveQueryTitles := strings.SplitSeq(liveTitleLower, ",")
+	titleFilterPassed := false
+	for liveQueryTitle := range liveQueryTitles {
+		titleFilterPassed = titleFilterPassed || s.CheckWildcardFilter(liveTitleLower, liveQueryTitle)
 	}
 
-	return true
+	// Return true if both filters passed
+	return streamerUsernameFilterPassed && titleFilterPassed
 }
 
 func (s *LiveService) CheckWildcardFilter(text, filter string) bool {

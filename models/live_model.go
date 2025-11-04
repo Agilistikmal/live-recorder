@@ -27,7 +27,7 @@ type LiveStreamer struct {
 }
 
 type LiveQuery struct {
-	Platform             string `json:"platform"`
-	StreamerUsernameLike string `json:"streamer_username_like"`
-	TitleLike            string `json:"title_like"`
+	Platforms            []string `json:"platforms"`
+	StreamerUsernameLike string   `json:"streamer_username_like"`
+	TitleLike            string   `json:"title_like"`
 }
