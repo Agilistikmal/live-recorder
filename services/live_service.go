@@ -95,6 +95,9 @@ func (s *LiveService) CheckFilters(live *models.Live, liveQuery *models.LiveQuer
 		}
 	}
 
+	liveQuery.StreamerUsernameLike = strings.ToLower(liveQuery.StreamerUsernameLike)
+	liveQuery.TitleLike = strings.ToLower(liveQuery.TitleLike)
+
 	liveTitleLower := strings.ToLower(live.Title)
 	liveUsernameLower := ""
 	if live.Streamer != nil {
@@ -102,14 +105,14 @@ func (s *LiveService) CheckFilters(live *models.Live, liveQuery *models.LiveQuer
 	}
 
 	// Filter Streamer Username LIKE (Wildcard *)
-	liveQueryStreamerUsernames := strings.SplitSeq(liveUsernameLower, ",")
+	liveQueryStreamerUsernames := strings.SplitSeq(liveQuery.StreamerUsernameLike, ",")
 	streamerUsernameFilterPassed := false
 	for liveQueryStreamerUsername := range liveQueryStreamerUsernames {
 		streamerUsernameFilterPassed = streamerUsernameFilterPassed || s.CheckWildcardFilter(liveUsernameLower, liveQueryStreamerUsername)
 	}
 
 	// Filter Title LIKE (Wildcard *)
-	liveQueryTitles := strings.SplitSeq(liveTitleLower, ",")
+	liveQueryTitles := strings.SplitSeq(liveQuery.TitleLike, ",")
 	titleFilterPassed := false
 	for liveQueryTitle := range liveQueryTitles {
 		titleFilterPassed = titleFilterPassed || s.CheckWildcardFilter(liveTitleLower, liveQueryTitle)
@@ -134,5 +137,6 @@ func (s *LiveService) CheckWildcardFilter(text, filter string) bool {
 	if cleanedFilter == "" {
 		return true
 	}
+
 	return strings.Contains(text, cleanedFilter)
 }

@@ -62,7 +62,7 @@ func (s *IDNLiveService) GetLives() ([]*models.Live, error) {
 			return nil, err
 		}
 
-		gReq, err := http.NewRequest("POST", "https://www.idn.app/graphql", bytes.NewBuffer(query))
+		gReq, err := http.NewRequest("POST", "https://api.idn.app/graphql", bytes.NewBuffer(query))
 		if err != nil {
 			return nil, err
 		}
