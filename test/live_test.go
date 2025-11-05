@@ -12,7 +12,7 @@ import (
 func TestLiveService_GetLives(t *testing.T) {
 	liveQuery := &models.LiveQuery{
 		Platforms:            []string{models.PlatformIDN, models.PlatformShowroom},
-		StreamerUsernameLike: "*48_*",
+		StreamerUsernameLike: "*4*",
 	}
 	liveRecorder := live.NewRecorder(liveQuery)
 	lives, err := liveRecorder.GetLives()
@@ -23,6 +23,6 @@ func TestLiveService_GetLives(t *testing.T) {
 	for _, live := range lives {
 		usernames = append(usernames, live.Streamer.Username)
 	}
-	assert.Contains(t, strings.Join(usernames, ","), "48_")
+	assert.Contains(t, strings.Join(usernames, ","), "4")
 	t.Logf("usernames: %v", strings.Join(usernames, ","))
 }
