@@ -4,15 +4,15 @@ import (
 	"os"
 	"testing"
 
-	"github.com/agilistikmal/live-recorder/services"
+	"github.com/agilistikmal/live-recorder/pkg/recorder/showroom"
 	"github.com/agilistikmal/live-recorder/utils"
 )
 
 func TestShowroomLiveService_Download(t *testing.T) {
 	outputPath := "showroom_test_result.mp4"
 	defer os.Remove(outputPath)
-	showroomLiveService := services.NewShowroomLiveService()
-	showroomLives, err := showroomLiveService.GetLives()
+	showroomRecorder := showroom.NewRecorder()
+	showroomLives, err := showroomRecorder.GetLives()
 	if err != nil {
 		t.Fatalf("Failed to get showroom lives: %v", err)
 	}
@@ -22,7 +22,7 @@ func TestShowroomLiveService_Download(t *testing.T) {
 		t.Fatalf("No showroom lives found")
 	}
 
-	streamingUrl, err := showroomLiveService.GetStreamingUrl(showroomLives[0].ID)
+	streamingUrl, err := showroomRecorder.GetStreamingUrl(showroomLives[0])
 	if err != nil {
 		t.Fatalf("Failed to get streaming url: %v", err)
 	}

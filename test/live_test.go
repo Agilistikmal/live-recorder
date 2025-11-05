@@ -4,18 +4,18 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/agilistikmal/live-recorder/models"
-	"github.com/agilistikmal/live-recorder/services"
+	"github.com/agilistikmal/live-recorder/pkg/recorder/live"
+	"github.com/agilistikmal/live-recorder/pkg/recorder/models"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestLiveService_GetLives(t *testing.T) {
-	liveService := services.NewLiveService()
 	liveQuery := &models.LiveQuery{
 		Platforms:            []string{models.PlatformIDN, models.PlatformShowroom},
 		StreamerUsernameLike: "*48_*",
 	}
-	lives, err := liveService.GetLives(liveQuery)
+	liveRecorder := live.NewRecorder(liveQuery)
+	lives, err := liveRecorder.GetLives()
 	assert.NoError(t, err, "Failed to get lives")
 	assert.Greater(t, len(lives), 0, "No lives found")
 

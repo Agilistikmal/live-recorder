@@ -3,7 +3,7 @@ package utils
 import (
 	"strings"
 
-	"github.com/agilistikmal/live-recorder/models"
+	"github.com/agilistikmal/live-recorder/pkg/recorder/models"
 	"github.com/sirupsen/logrus"
 )
 

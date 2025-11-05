@@ -9,8 +9,10 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/agilistikmal/live-recorder/models"
-	"github.com/agilistikmal/live-recorder/services"
+	"github.com/agilistikmal/live-recorder/pkg/recorder"
+	"github.com/agilistikmal/live-recorder/pkg/recorder/live"
+	"github.com/agilistikmal/live-recorder/pkg/recorder/models"
+	"github.com/agilistikmal/live-recorder/pkg/recorder/watch"
 	"github.com/agilistikmal/live-recorder/utils"
 	"github.com/sirupsen/logrus"
 )
@@ -45,9 +47,9 @@ func main() {
 		liveQuery.Platforms = strings.Split(*platforms, ",")
 	}
 
-	liveService := services.NewLiveService()
+	liveRecorder := live.NewRecorder(liveQuery)
 	if *watchMode {
-		watchService := services.NewWatchService(liveService, liveQuery)
+		watchService := watch.NewWatchLive(liveRecorder)
 		watchService.StartWatchMode()
 
 		quit := make(chan os.Signal, 1)
@@ -57,13 +59,13 @@ func main() {
 
 		logrus.Info("Received stop signal. Exiting.")
 	} else {
-		runOnce(liveService, liveQuery)
+		runOnce(liveRecorder, liveQuery)
 	}
 }
 
-func runOnce(liveService *services.LiveService, liveQuery *models.LiveQuery) {
+func runOnce(liveRecorder recorder.Recorder, liveQuery *models.LiveQuery) {
 	logrus.Info("Once mode started")
-	lives, err := liveService.GetLives(liveQuery)
+	lives, err := liveRecorder.GetLives()
 	if err != nil {
 		logrus.Errorf("Failed to get lives: %v", err)
 		return
@@ -79,7 +81,7 @@ func runOnce(liveService *services.LiveService, liveQuery *models.LiveQuery) {
 	wg := sync.WaitGroup{}
 	for _, live := range lives {
 		wg.Add(1)
-		streamingUrl, err := liveService.GetStreamingUrl(live)
+		streamingUrl, err := liveRecorder.GetStreamingUrl(live)
 		if err != nil {
 			logrus.Errorf("Failed to get streaming url: %v", err)
 			return

@@ -1,4 +1,4 @@
-package services
+package idn
 
 import (
 	"bytes"
@@ -8,29 +8,30 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/agilistikmal/live-recorder/configs"
-	"github.com/agilistikmal/live-recorder/models"
+	"github.com/agilistikmal/live-recorder/pkg/recorder"
+	"github.com/agilistikmal/live-recorder/pkg/recorder/models"
+	"github.com/agilistikmal/live-recorder/utils"
 )
 
-type IDNLiveService struct {
-	requestConfig configs.RequestConfig
-	httpClient    *http.Client
+type IDNRecorder struct {
+	recorderConfig recorder.RecorderConfig
+	httpClient     *http.Client
 }
 
-func NewIDNLiveService() *IDNLiveService {
-	requestConfig := configs.NewRequestConfig(
-		"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-		"https://www.idnlive.com/",
-		"",
-	)
+func NewRecorder() recorder.Recorder {
+	recorderConfig := recorder.RecorderConfig{
+		UserAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+		Referer:   "https://www.idnlive.com/",
+		Cookie:    "",
+	}
 	httpClient := &http.Client{}
-	return &IDNLiveService{
-		requestConfig: requestConfig,
-		httpClient:    httpClient,
+	return &IDNRecorder{
+		recorderConfig: recorderConfig,
+		httpClient:     httpClient,
 	}
 }
 
-func (s *IDNLiveService) GetLives() ([]*models.Live, error) {
+func (s *IDNRecorder) GetLives() ([]*models.Live, error) {
 	lives := make([]*models.Live, 0)
 
 	page := 1
@@ -65,9 +66,9 @@ func (s *IDNLiveService) GetLives() ([]*models.Live, error) {
 			return nil, err
 		}
 		gReq.Header.Set("Content-Type", "application/json")
-		gReq.Header.Set("User-Agent", s.requestConfig.UserAgent)
-		gReq.Header.Set("Referer", s.requestConfig.Referer)
-		gReq.Header.Set("Cookie", s.requestConfig.Cookie)
+		gReq.Header.Set("User-Agent", s.recorderConfig.UserAgent)
+		gReq.Header.Set("Referer", s.recorderConfig.Referer)
+		gReq.Header.Set("Cookie", s.recorderConfig.Cookie)
 		resp, err := s.httpClient.Do(gReq)
 		if err != nil {
 			return nil, err
@@ -102,4 +103,16 @@ func (s *IDNLiveService) GetLives() ([]*models.Live, error) {
 		page++
 	}
 	return lives, nil
+}
+
+func (s *IDNRecorder) GetStreamingUrl(live *models.Live) (string, error) {
+	return live.StreamingUrl, nil
+}
+
+func (s *IDNRecorder) Record(live *models.Live, outputPath string) error {
+	downloadInfo := utils.DownloadHLS(live.StreamingUrl, &outputPath)
+	if downloadInfo == nil {
+		return fmt.Errorf("failed to download hls: %v", live.StreamingUrl)
+	}
+	return nil
 }

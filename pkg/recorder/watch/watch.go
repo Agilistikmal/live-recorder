@@ -1,4 +1,4 @@
-package services
+package watch
 
 import (
 	"fmt"
@@ -7,28 +7,27 @@ import (
 
 	"math/rand"
 
-	"github.com/agilistikmal/live-recorder/models"
+	"github.com/agilistikmal/live-recorder/pkg/recorder"
+	"github.com/agilistikmal/live-recorder/pkg/recorder/models"
 	"github.com/agilistikmal/live-recorder/utils"
 	"github.com/sirupsen/logrus"
 )
 
-type WatchService struct {
-	liveService     *LiveService
-	query           *models.LiveQuery
+type WatchLive struct {
+	liveRecorder    recorder.Recorder
 	recordedStreams map[string]bool
 	mu              sync.Mutex
 	wg              sync.WaitGroup
 }
 
-func NewWatchService(ls *LiveService, q *models.LiveQuery) *WatchService {
-	return &WatchService{
-		liveService:     ls,
-		query:           q,
+func NewWatchLive(ls recorder.Recorder) *WatchLive {
+	return &WatchLive{
+		liveRecorder:    ls,
 		recordedStreams: make(map[string]bool),
 	}
 }
 
-func (ws *WatchService) StartWatchMode() {
+func (ws *WatchLive) StartWatchMode() {
 	logrus.Info("Watch mode started")
 
 	ws.CheckAndStartRecording()
@@ -42,8 +41,8 @@ func (ws *WatchService) StartWatchMode() {
 	}
 }
 
-func (ws *WatchService) CheckAndStartRecording() {
-	lives, err := ws.liveService.GetLives(ws.query)
+func (ws *WatchLive) CheckAndStartRecording() {
+	lives, err := ws.liveRecorder.GetLives()
 	if err != nil {
 		logrus.Errorf("Failed to get lives: %v", err)
 		return
@@ -60,7 +59,7 @@ func (ws *WatchService) CheckAndStartRecording() {
 			continue
 		}
 
-		streamingUrl, err := ws.liveService.GetStreamingUrl(live)
+		streamingUrl, err := ws.liveRecorder.GetStreamingUrl(live)
 		if err != nil {
 			logrus.Errorf("Failed to get streaming url: %v", err)
 			return

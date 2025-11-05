@@ -1,41 +1,46 @@
-package services
+package live
 
 import (
 	"fmt"
 	"strings"
 	"sync"
 
-	"github.com/agilistikmal/live-recorder/models"
+	"github.com/agilistikmal/live-recorder/pkg/recorder"
+	"github.com/agilistikmal/live-recorder/pkg/recorder/idn"
+	"github.com/agilistikmal/live-recorder/pkg/recorder/models"
+	"github.com/agilistikmal/live-recorder/pkg/recorder/showroom"
 	"github.com/sirupsen/logrus"
 )
 
-type LiveService struct {
-	showroomLiveService *ShowroomLiveService
-	idnLiveService      *IDNLiveService
+type LiveRecorder struct {
+	showroomRecorder recorder.Recorder
+	idnRecorder      recorder.Recorder
+	liveQuery        *models.LiveQuery
 }
 
-func NewLiveService() *LiveService {
-	return &LiveService{
-		showroomLiveService: NewShowroomLiveService(),
-		idnLiveService:      NewIDNLiveService(),
+func NewRecorder(liveQuery *models.LiveQuery) recorder.Recorder {
+	return &LiveRecorder{
+		showroomRecorder: showroom.NewRecorder(),
+		idnRecorder:      idn.NewRecorder(),
+		liveQuery:        liveQuery,
 	}
 }
 
-func (s *LiveService) GetLives(liveQuery *models.LiveQuery) ([]*models.Live, error) {
+func (s *LiveRecorder) GetLives() ([]*models.Live, error) {
 	lives := make([]*models.Live, 0)
 	wg := sync.WaitGroup{}
-	for _, platform := range liveQuery.Platforms {
+	for _, platform := range s.liveQuery.Platforms {
 		switch platform {
 		case models.PlatformShowroom:
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				showroomLives, err := s.showroomLiveService.GetLives()
+				showroomLives, err := s.showroomRecorder.GetLives()
 				if err != nil {
 					logrus.Errorf("Failed to get showroom lives: %v", err)
 					return
 				}
-				filteredShowroomLives, err := s.ApplyFilter(showroomLives, liveQuery)
+				filteredShowroomLives, err := s.ApplyFilter(showroomLives, s.liveQuery)
 				if err != nil {
 					logrus.Errorf("Failed to apply filter to showroom lives: %v", err)
 					return
@@ -46,12 +51,12 @@ func (s *LiveService) GetLives(liveQuery *models.LiveQuery) ([]*models.Live, err
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				idnLives, err := s.idnLiveService.GetLives()
+				idnLives, err := s.idnRecorder.GetLives()
 				if err != nil {
 					logrus.Errorf("Failed to get idn lives: %v", err)
 					return
 				}
-				filteredIdnLives, err := s.ApplyFilter(idnLives, liveQuery)
+				filteredIdnLives, err := s.ApplyFilter(idnLives, s.liveQuery)
 				if err != nil {
 					logrus.Errorf("Failed to apply filter to idn lives: %v", err)
 					return
@@ -78,16 +83,25 @@ func (s *LiveService) GetLives(liveQuery *models.LiveQuery) ([]*models.Live, err
 	return lives, nil
 }
 
-func (s *LiveService) GetStreamingUrl(live *models.Live) (string, error) {
+func (s *LiveRecorder) GetStreamingUrl(live *models.Live) (string, error) {
 	switch live.Platform {
 	case models.PlatformShowroom:
-		return s.showroomLiveService.GetStreamingUrl(live.ID)
+		return s.showroomRecorder.GetStreamingUrl(live)
 	default:
 		return live.StreamingUrl, nil
 	}
 }
 
-func (s *LiveService) ApplyFilter(lives []*models.Live, query *models.LiveQuery) ([]*models.Live, error) {
+func (s *LiveRecorder) Record(live *models.Live, outputPath string) error {
+	switch live.Platform {
+	case models.PlatformShowroom:
+		return s.showroomRecorder.Record(live, outputPath)
+	default:
+		return s.idnRecorder.Record(live, outputPath)
+	}
+}
+
+func (s *LiveRecorder) ApplyFilter(lives []*models.Live, query *models.LiveQuery) ([]*models.Live, error) {
 	filteredList := make([]*models.Live, 0, len(lives))
 
 	for _, live := range lives {
@@ -99,7 +113,7 @@ func (s *LiveService) ApplyFilter(lives []*models.Live, query *models.LiveQuery)
 	return filteredList, nil
 }
 
-func (s *LiveService) CheckFilters(live *models.Live, liveQuery *models.LiveQuery) bool {
+func (s *LiveRecorder) CheckFilters(live *models.Live, liveQuery *models.LiveQuery) bool {
 	if live.Streamer == nil {
 		if liveQuery.StreamerUsernameLike != "" {
 			return false
@@ -133,7 +147,7 @@ func (s *LiveService) CheckFilters(live *models.Live, liveQuery *models.LiveQuer
 	return streamerUsernameFilterPassed && titleFilterPassed
 }
 
-func (s *LiveService) CheckWildcardFilter(text, filter string) bool {
+func (s *LiveRecorder) CheckWildcardFilter(text, filter string) bool {
 	if strings.HasPrefix(filter, "*") && !strings.HasSuffix(filter, "*") && len(filter) > 1 {
 		suffix := strings.TrimPrefix(filter, "*")
 		return strings.HasSuffix(text, suffix)
