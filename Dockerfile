@@ -9,7 +9,7 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o live-recorder ./main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o live-recorder ./cmd/live-recorder/main.go
 
 FROM alpine:latest
 
