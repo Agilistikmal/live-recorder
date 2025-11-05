@@ -10,6 +10,7 @@ type RecorderConfig struct {
 
 type Recorder interface {
 	GetLives() ([]*models.Live, error)
+	GetLive(url string) (*models.Live, error)
 	GetStreamingUrl(live *models.Live) (string, error)
 	Record(live *models.Live, outputPath string) error
 }

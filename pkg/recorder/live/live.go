@@ -9,12 +9,14 @@ import (
 	"github.com/agilistikmal/live-recorder/pkg/recorder/idn"
 	"github.com/agilistikmal/live-recorder/pkg/recorder/models"
 	"github.com/agilistikmal/live-recorder/pkg/recorder/showroom"
+	"github.com/agilistikmal/live-recorder/pkg/recorder/tiktok"
 	"github.com/sirupsen/logrus"
 )
 
 type LiveRecorder struct {
 	showroomRecorder recorder.Recorder
 	idnRecorder      recorder.Recorder
+	tiktokRecorder   recorder.Recorder
 	liveQuery        *models.LiveQuery
 }
 
@@ -22,6 +24,7 @@ func NewRecorder(liveQuery *models.LiveQuery) recorder.Recorder {
 	return &LiveRecorder{
 		showroomRecorder: showroom.NewRecorder(),
 		idnRecorder:      idn.NewRecorder(),
+		tiktokRecorder:   tiktok.NewRecorder(),
 		liveQuery:        liveQuery,
 	}
 }
@@ -81,6 +84,23 @@ func (s *LiveRecorder) GetLives() ([]*models.Live, error) {
 	}
 	lives = uniqueLives
 	return lives, nil
+}
+
+func (s *LiveRecorder) GetLive(url string) (*models.Live, error) {
+	if len(s.liveQuery.Platforms) < 1 {
+		return nil, fmt.Errorf("no platforms provided")
+	}
+
+	switch s.liveQuery.Platforms[0] {
+	case models.PlatformShowroom:
+		return s.showroomRecorder.GetLive(url)
+	case models.PlatformIDN:
+		return s.idnRecorder.GetLive(url)
+	case models.PlatformTiktok:
+		return s.tiktokRecorder.GetLive(url)
+	default:
+		return nil, fmt.Errorf("invalid platform: %s", s.liveQuery.Platforms[0])
+	}
 }
 
 func (s *LiveRecorder) GetStreamingUrl(live *models.Live) (string, error) {

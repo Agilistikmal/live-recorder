@@ -60,6 +60,10 @@ func (s *ShowroomRecorder) GetLives() ([]*models.Live, error) {
 	return liveList, nil
 }
 
+func (s *ShowroomRecorder) GetLive(url string) (*models.Live, error) {
+	return nil, nil
+}
+
 func (s *ShowroomRecorder) GetStreamingUrl(live *models.Live) (string, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("https://www.showroom-live.com/api/live/streaming_url?abr_available=1&room_id=%v", live.ID), nil)
 	if err != nil {

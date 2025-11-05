@@ -25,7 +25,7 @@ func main() {
 
 	platforms := flag.String("p", "", "Platforms to record (showroom,idn)")
 	query := flag.String("q", "", "Query to search for lives (streamer_username:*_JKT48,48_*;title:*JKT48*)")
-	url := flag.String("url", "", "URL to record (https://www.showroom-live.com/r/example)")
+	url := flag.String("url", "", "URL to record (https://www.tiktok.com/@user/live)")
 
 	flag.Parse()
 
@@ -35,6 +35,20 @@ func main() {
 
 	if *query == "" && *url == "" {
 		logrus.Fatalf("Query or URL is required")
+	}
+
+	if *url != "" {
+		liveRecorder := live.NewRecorder(&models.LiveQuery{
+			Platforms: strings.Split(*platforms, ","),
+		})
+		live, err := liveRecorder.GetLive(*url)
+		if err != nil {
+			logrus.Fatalf("Failed to get live: %v", err)
+		}
+		filename := fmt.Sprintf("./tmp/%s/%s.mp4", live.Platform, live.Streamer.Username)
+		liveRecorder.Record(live, filename)
+		logrus.Infof("Download completed: %v", filename)
+		return
 	}
 
 	var liveQuery *models.LiveQuery

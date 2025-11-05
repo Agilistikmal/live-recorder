@@ -25,7 +25,7 @@ func DownloadHLS(url string, outputPath *string) map[string]interface{} {
 	outputPathTemp := fmt.Sprintf("%s_%d.tmp%s", outputPathWithoutExt, timestamp, ext)
 
 	cmd := exec.Command("ffmpeg",
-		// "-t", "30", // For testing purposes (recording 30 seconds)
+		// "-t", "10", // For testing purposes (recording 10 seconds)
 		"-i", url,
 		"-y",
 		"-c", "copy",

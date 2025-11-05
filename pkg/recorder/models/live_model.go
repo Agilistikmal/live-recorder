@@ -5,6 +5,7 @@ import "time"
 const (
 	PlatformShowroom = "showroom"
 	PlatformIDN      = "idn"
+	PlatformTiktok   = "tiktok"
 )
 
 type Live struct {

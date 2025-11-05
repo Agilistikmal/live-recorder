@@ -105,6 +105,10 @@ func (s *IDNRecorder) GetLives() ([]*models.Live, error) {
 	return lives, nil
 }
 
+func (s *IDNRecorder) GetLive(url string) (*models.Live, error) {
+	return nil, nil
+}
+
 func (s *IDNRecorder) GetStreamingUrl(live *models.Live) (string, error) {
 	return live.StreamingUrl, nil
 }
