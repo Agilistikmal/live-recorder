@@ -62,15 +62,79 @@ func main() {
 
 	liveRecorder := live.NewRecorder(liveQuery)
 	if *watchMode {
-		watchService := watch.NewWatchLive(liveRecorder)
-		watchService.StartWatchMode()
+		// Create buffered channels for events
+		liveChan := make(chan *recorder.Live, 100)        // Buffer 100 events
+		statusChan := make(chan *watch.StatusUpdate, 100) // Buffer 100 status updates
+
+		watchService := watch.NewWatchLive(liveRecorder, "./tmp")
+		watchService.SetLiveChannel(liveChan)
+		watchService.SetStatusChannel(statusChan)
+
+		// Start goroutine to consume live events from channel
+		go func() {
+			for live := range liveChan {
+				// Process live event here
+				// Contoh: logging, notification, webhook, dll
+				logrus.WithFields(logrus.Fields{
+					"platform":      live.Platform,
+					"streamer":      live.Streamer.Username,
+					"title":         live.Title,
+					"view_count":    live.ViewCount,
+					"platform_url":  live.PlatformUrl,
+					"streaming_url": live.StreamingUrl,
+				}).Info("New live stream detected")
+			}
+		}()
+
+		// Start goroutine to consume status updates from channel
+		go func() {
+			for update := range statusChan {
+				// Process status updates here
+				// Contoh: logging, notification, webhook, database update, dll
+				logrus.WithFields(logrus.Fields{
+					"streamer_id":  update.StreamerID,
+					"status":       update.Status,
+					"platform":     update.Info.Live.Platform,
+					"title":        update.Info.Live.Title,
+					"started_at":   update.Info.StartedAt,
+					"completed_at": update.Info.CompletedAt,
+					"file_path":    update.Info.FilePath,
+					"file_size":    update.Info.FileSize,
+					"error":        update.Info.Error,
+				}).Info("Recording status update")
+
+				// Contoh: Handle berdasarkan status
+				switch update.Status {
+				case watch.StatusInProgress:
+					logrus.Infof("Recording started for %s", update.StreamerID)
+				case watch.StatusCompleted:
+					logrus.Infof("Recording completed for %s: %s (Size: %d bytes)",
+						update.StreamerID, update.Info.FilePath, update.Info.FileSize)
+				case watch.StatusFailed:
+					logrus.Errorf("Recording failed for %s: %v", update.StreamerID, update.Info.Error)
+				}
+			}
+		}()
+
+		// Start watch mode in goroutine so it doesn't block
+		go watchService.StartWatchMode()
 
 		quit := make(chan os.Signal, 1)
 		signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 		logrus.Info("Application is running in Watch Mode. Waiting for signal to stop...")
 		<-quit
 
+		// Cleanup: close channels
+		close(liveChan)
+		close(statusChan)
 		logrus.Info("Received stop signal. Exiting.")
+
+		// Contoh: Print final status summary
+		allStatuses := watchService.GetAllStatuses()
+		logrus.Infof("Final status summary: %d recordings", len(allStatuses))
+		for streamerID, info := range allStatuses {
+			logrus.Infof("  %s: %s", streamerID, info.Status)
+		}
 	} else {
 		runOnce(liveRecorder, liveQuery)
 	}
