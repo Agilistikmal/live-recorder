@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/agilistikmal/live-recorder/pkg/recorder"
-	"github.com/agilistikmal/live-recorder/pkg/recorder/models"
 	"github.com/agilistikmal/live-recorder/utils"
 )
 
@@ -29,7 +28,7 @@ func NewRecorder() recorder.Recorder {
 	}
 }
 
-func (s *ShowroomRecorder) GetLives() ([]*models.Live, error) {
+func (s *ShowroomRecorder) GetLives() ([]*recorder.Live, error) {
 	req, err := http.NewRequest("GET", "https://www.showroom-live.com/api/live/onlives", nil)
 	if err != nil {
 		return nil, err
@@ -44,13 +43,13 @@ func (s *ShowroomRecorder) GetLives() ([]*models.Live, error) {
 	}
 	defer resp.Body.Close()
 
-	var showroomResponses models.ShowroomResponses
+	var showroomResponses ShowroomResponses
 	err = json.NewDecoder(resp.Body).Decode(&showroomResponses)
 	if err != nil {
 		return nil, err
 	}
 
-	liveList := make([]*models.Live, 0)
+	liveList := make([]*recorder.Live, 0)
 	for _, onLive := range showroomResponses.OnLives {
 		for _, showroomLive := range onLive.Lives {
 			liveList = append(liveList, showroomLive.ToLive())
@@ -60,11 +59,11 @@ func (s *ShowroomRecorder) GetLives() ([]*models.Live, error) {
 	return liveList, nil
 }
 
-func (s *ShowroomRecorder) GetLive(url string) (*models.Live, error) {
+func (s *ShowroomRecorder) GetLive(url string) (*recorder.Live, error) {
 	return nil, nil
 }
 
-func (s *ShowroomRecorder) GetStreamingUrl(live *models.Live) (string, error) {
+func (s *ShowroomRecorder) GetStreamingUrl(live *recorder.Live) (string, error) {
 	req, err := http.NewRequest("GET", fmt.Sprintf("https://www.showroom-live.com/api/live/streaming_url?abr_available=1&room_id=%v", live.ID), nil)
 	if err != nil {
 		return "", err
@@ -79,7 +78,7 @@ func (s *ShowroomRecorder) GetStreamingUrl(live *models.Live) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	var srStreamingUrlResponses models.ShowroomStreamingUrlResponses
+	var srStreamingUrlResponses ShowroomStreamingUrlResponses
 	err = json.NewDecoder(resp.Body).Decode(&srStreamingUrlResponses)
 	if err != nil {
 		return "", err
@@ -92,7 +91,7 @@ func (s *ShowroomRecorder) GetStreamingUrl(live *models.Live) (string, error) {
 	return srStreamingUrlResponses.StreamingUrlList[1].Url, nil
 }
 
-func (s *ShowroomRecorder) Record(live *models.Live, outputPath string) error {
+func (s *ShowroomRecorder) Record(live *recorder.Live, outputPath string) error {
 	downloadInfo := utils.DownloadHLS(live.StreamingUrl, &outputPath)
 	if downloadInfo == nil {
 		return fmt.Errorf("failed to download hls: %v", live.StreamingUrl)

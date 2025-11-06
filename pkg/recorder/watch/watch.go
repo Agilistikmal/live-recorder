@@ -8,7 +8,6 @@ import (
 	"math/rand"
 
 	"github.com/agilistikmal/live-recorder/pkg/recorder"
-	"github.com/agilistikmal/live-recorder/pkg/recorder/models"
 	"github.com/agilistikmal/live-recorder/utils"
 	"github.com/sirupsen/logrus"
 )
@@ -72,7 +71,7 @@ func (ws *WatchLive) CheckAndStartRecording() {
 		ws.mu.Unlock()
 
 		ws.wg.Add(1)
-		go func(l models.Live) {
+		go func(l recorder.Live) {
 			defer ws.wg.Done()
 			defer func() {
 				ws.mu.Lock()

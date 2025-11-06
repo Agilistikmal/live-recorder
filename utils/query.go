@@ -3,11 +3,11 @@ package utils
 import (
 	"strings"
 
-	"github.com/agilistikmal/live-recorder/pkg/recorder/models"
+	"github.com/agilistikmal/live-recorder/pkg/recorder"
 	"github.com/sirupsen/logrus"
 )
 
-func ParseLiveQuery(query string, liveQuery *models.LiveQuery) error {
+func ParseLiveQuery(query string, liveQuery *recorder.LiveQuery) error {
 	pairs := strings.Split(query, ",")
 
 	for _, pair := range pairs {

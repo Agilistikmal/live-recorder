@@ -4,14 +4,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/agilistikmal/live-recorder/pkg/recorder"
 	"github.com/agilistikmal/live-recorder/pkg/recorder/live"
-	"github.com/agilistikmal/live-recorder/pkg/recorder/models"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestLiveService_GetLives(t *testing.T) {
-	liveQuery := &models.LiveQuery{
-		Platforms:            []string{models.PlatformIDN, models.PlatformShowroom},
+	liveQuery := &recorder.LiveQuery{
+		Platforms:            []string{recorder.PlatformIDN, recorder.PlatformShowroom},
 		StreamerUsernameLike: "*4*",
 	}
 	liveRecorder := live.NewRecorder(liveQuery)

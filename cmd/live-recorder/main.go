@@ -11,7 +11,6 @@ import (
 
 	"github.com/agilistikmal/live-recorder/pkg/recorder"
 	"github.com/agilistikmal/live-recorder/pkg/recorder/live"
-	"github.com/agilistikmal/live-recorder/pkg/recorder/models"
 	"github.com/agilistikmal/live-recorder/pkg/recorder/watch"
 	"github.com/agilistikmal/live-recorder/utils"
 	"github.com/sirupsen/logrus"
@@ -38,7 +37,7 @@ func main() {
 	}
 
 	if *url != "" {
-		liveRecorder := live.NewRecorder(&models.LiveQuery{
+		liveRecorder := live.NewRecorder(&recorder.LiveQuery{
 			Platforms: strings.Split(*platforms, ","),
 		})
 		live, err := liveRecorder.GetLive(*url)
@@ -51,9 +50,9 @@ func main() {
 		return
 	}
 
-	var liveQuery *models.LiveQuery
+	var liveQuery *recorder.LiveQuery
 	if *query != "" {
-		liveQuery = &models.LiveQuery{}
+		liveQuery = &recorder.LiveQuery{}
 		err := utils.ParseLiveQuery(*query, liveQuery)
 		if err != nil {
 			logrus.Fatalf("Failed to parse live query: %v", err)
@@ -77,7 +76,7 @@ func main() {
 	}
 }
 
-func runOnce(liveRecorder recorder.Recorder, liveQuery *models.LiveQuery) {
+func runOnce(liveRecorder recorder.Recorder, liveQuery *recorder.LiveQuery) {
 	logrus.Info("Once mode started")
 	lives, err := liveRecorder.GetLives()
 	if err != nil {

@@ -7,7 +7,6 @@ import (
 
 	"github.com/agilistikmal/live-recorder/pkg/recorder"
 	"github.com/agilistikmal/live-recorder/pkg/recorder/idn"
-	"github.com/agilistikmal/live-recorder/pkg/recorder/models"
 	"github.com/agilistikmal/live-recorder/pkg/recorder/showroom"
 	"github.com/agilistikmal/live-recorder/pkg/recorder/tiktok"
 	"github.com/sirupsen/logrus"
@@ -17,10 +16,10 @@ type LiveRecorder struct {
 	showroomRecorder recorder.Recorder
 	idnRecorder      recorder.Recorder
 	tiktokRecorder   recorder.Recorder
-	liveQuery        *models.LiveQuery
+	liveQuery        *recorder.LiveQuery
 }
 
-func NewRecorder(liveQuery *models.LiveQuery) recorder.Recorder {
+func NewRecorder(liveQuery *recorder.LiveQuery) recorder.Recorder {
 	return &LiveRecorder{
 		showroomRecorder: showroom.NewRecorder(),
 		idnRecorder:      idn.NewRecorder(),
@@ -29,12 +28,12 @@ func NewRecorder(liveQuery *models.LiveQuery) recorder.Recorder {
 	}
 }
 
-func (s *LiveRecorder) GetLives() ([]*models.Live, error) {
-	lives := make([]*models.Live, 0)
+func (s *LiveRecorder) GetLives() ([]*recorder.Live, error) {
+	lives := make([]*recorder.Live, 0)
 	wg := sync.WaitGroup{}
 	for _, platform := range s.liveQuery.Platforms {
 		switch platform {
-		case models.PlatformShowroom:
+		case recorder.PlatformShowroom:
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
@@ -50,7 +49,7 @@ func (s *LiveRecorder) GetLives() ([]*models.Live, error) {
 				}
 				lives = append(lives, filteredShowroomLives...)
 			}()
-		case models.PlatformIDN:
+		case recorder.PlatformIDN:
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
@@ -74,7 +73,7 @@ func (s *LiveRecorder) GetLives() ([]*models.Live, error) {
 	wg.Wait()
 
 	// Remove duplicates
-	uniqueLives := make([]*models.Live, 0)
+	uniqueLives := make([]*recorder.Live, 0)
 	seen := make(map[string]bool)
 	for _, live := range lives {
 		if !seen[live.ID] {
@@ -86,43 +85,43 @@ func (s *LiveRecorder) GetLives() ([]*models.Live, error) {
 	return lives, nil
 }
 
-func (s *LiveRecorder) GetLive(url string) (*models.Live, error) {
+func (s *LiveRecorder) GetLive(url string) (*recorder.Live, error) {
 	if len(s.liveQuery.Platforms) < 1 {
 		return nil, fmt.Errorf("no platforms provided")
 	}
 
 	switch s.liveQuery.Platforms[0] {
-	case models.PlatformShowroom:
+	case recorder.PlatformShowroom:
 		return s.showroomRecorder.GetLive(url)
-	case models.PlatformIDN:
+	case recorder.PlatformIDN:
 		return s.idnRecorder.GetLive(url)
-	case models.PlatformTiktok:
+	case recorder.PlatformTiktok:
 		return s.tiktokRecorder.GetLive(url)
 	default:
 		return nil, fmt.Errorf("invalid platform: %s", s.liveQuery.Platforms[0])
 	}
 }
 
-func (s *LiveRecorder) GetStreamingUrl(live *models.Live) (string, error) {
+func (s *LiveRecorder) GetStreamingUrl(live *recorder.Live) (string, error) {
 	switch live.Platform {
-	case models.PlatformShowroom:
+	case recorder.PlatformShowroom:
 		return s.showroomRecorder.GetStreamingUrl(live)
 	default:
 		return live.StreamingUrl, nil
 	}
 }
 
-func (s *LiveRecorder) Record(live *models.Live, outputPath string) error {
+func (s *LiveRecorder) Record(live *recorder.Live, outputPath string) error {
 	switch live.Platform {
-	case models.PlatformShowroom:
+	case recorder.PlatformShowroom:
 		return s.showroomRecorder.Record(live, outputPath)
 	default:
 		return s.idnRecorder.Record(live, outputPath)
 	}
 }
 
-func (s *LiveRecorder) ApplyFilter(lives []*models.Live, query *models.LiveQuery) ([]*models.Live, error) {
-	filteredList := make([]*models.Live, 0, len(lives))
+func (s *LiveRecorder) ApplyFilter(lives []*recorder.Live, query *recorder.LiveQuery) ([]*recorder.Live, error) {
+	filteredList := make([]*recorder.Live, 0, len(lives))
 
 	for _, live := range lives {
 		if s.CheckFilters(live, query) {
@@ -133,7 +132,7 @@ func (s *LiveRecorder) ApplyFilter(lives []*models.Live, query *models.LiveQuery
 	return filteredList, nil
 }
 
-func (s *LiveRecorder) CheckFilters(live *models.Live, liveQuery *models.LiveQuery) bool {
+func (s *LiveRecorder) CheckFilters(live *recorder.Live, liveQuery *recorder.LiveQuery) bool {
 	if live.Streamer == nil {
 		if liveQuery.StreamerUsernameLike != "" {
 			return false

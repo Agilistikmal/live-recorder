@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/agilistikmal/live-recorder/pkg/recorder"
-	"github.com/agilistikmal/live-recorder/pkg/recorder/models"
 	"github.com/agilistikmal/live-recorder/utils"
 )
 
@@ -34,13 +33,13 @@ func NewRecorder() recorder.Recorder {
 	}
 }
 
-func (s *TiktokRecorder) GetLives() ([]*models.Live, error) {
-	lives := make([]*models.Live, 0)
+func (s *TiktokRecorder) GetLives() ([]*recorder.Live, error) {
+	lives := make([]*recorder.Live, 0)
 
 	return lives, nil
 }
 
-func (s *TiktokRecorder) GetLive(url string) (*models.Live, error) {
+func (s *TiktokRecorder) GetLive(url string) (*recorder.Live, error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
@@ -66,7 +65,7 @@ func (s *TiktokRecorder) GetLive(url string) (*models.Live, error) {
 	}
 
 	jsonData := matches[1]
-	var tiktokResponses models.TiktokResponses
+	var tiktokResponses TiktokResponses
 	err = json.Unmarshal([]byte(jsonData), &tiktokResponses)
 	if err != nil {
 		return nil, err
@@ -80,15 +79,15 @@ func (s *TiktokRecorder) GetLive(url string) (*models.Live, error) {
 		return nil, fmt.Errorf("user is not live")
 	}
 
-	live := &models.Live{
+	live := &recorder.Live{
 		ID:          liveRoom.LiveRoom.StreamId,
 		Title:       liveRoom.LiveRoom.Title,
-		Platform:    models.PlatformTiktok,
+		Platform:    recorder.PlatformTiktok,
 		PlatformUrl: fmt.Sprintf("https://www.tiktok.com/@%s/live", user.UniqueId),
 		ImageUrl:    liveRoom.LiveRoom.CoverUrl,
 		ViewCount:   liveRoom.LiveRoom.LiveRoomStats.UserCount,
 		StartedAt:   &startedAt,
-		Streamer: &models.LiveStreamer{
+		Streamer: &recorder.LiveStreamer{
 			Username: user.UniqueId,
 			Name:     user.Nickname,
 			ImageUrl: user.AvatarLarger,
@@ -105,11 +104,11 @@ func (s *TiktokRecorder) GetLive(url string) (*models.Live, error) {
 	return live, nil
 }
 
-func (s *TiktokRecorder) GetStreamingUrl(live *models.Live) (string, error) {
+func (s *TiktokRecorder) GetStreamingUrl(live *recorder.Live) (string, error) {
 	return live.StreamingUrl, nil
 }
 
-func (s *TiktokRecorder) Record(live *models.Live, outputPath string) error {
+func (s *TiktokRecorder) Record(live *recorder.Live, outputPath string) error {
 	downloadInfo := utils.DownloadHLS(live.StreamingUrl, &outputPath)
 	if downloadInfo == nil {
 		return fmt.Errorf("failed to download hls: %v", live.StreamingUrl)
@@ -118,7 +117,7 @@ func (s *TiktokRecorder) Record(live *models.Live, outputPath string) error {
 }
 
 // qKey: hls, flv
-func getVideoQualityUrl(streamDataStr string, qKey string) ([]models.TiktokVideoQualityInfo, error) {
+func getVideoQualityUrl(streamDataStr string, qKey string) ([]TiktokVideoQualityInfo, error) {
 	var streamDataMap map[string]any
 	if err := json.Unmarshal([]byte(streamDataStr), &streamDataMap); err != nil {
 		return nil, fmt.Errorf("failed to parse stream_data: %w", err)
@@ -129,7 +128,7 @@ func getVideoQualityUrl(streamDataStr string, qKey string) ([]models.TiktokVideo
 		return nil, fmt.Errorf("data section not found in stream_data")
 	}
 
-	playList := make([]models.TiktokVideoQualityInfo, 0)
+	playList := make([]TiktokVideoQualityInfo, 0)
 
 	for _, value := range dataSection {
 		qualityData, ok := value.(map[string]any)
@@ -181,7 +180,7 @@ func getVideoQualityUrl(streamDataStr string, qKey string) ([]models.TiktokVideo
 				width, err1 := strconv.Atoi(parts[0])
 				height, err2 := strconv.Atoi(parts[1])
 				if err1 == nil && err2 == nil {
-					playList = append(playList, models.TiktokVideoQualityInfo{
+					playList = append(playList, TiktokVideoQualityInfo{
 						URL:        playUrl,
 						VBitrate:   vbitrate,
 						Resolution: [2]int{width, height},

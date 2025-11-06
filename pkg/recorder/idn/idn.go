@@ -9,7 +9,6 @@ import (
 	"net/http"
 
 	"github.com/agilistikmal/live-recorder/pkg/recorder"
-	"github.com/agilistikmal/live-recorder/pkg/recorder/models"
 	"github.com/agilistikmal/live-recorder/utils"
 )
 
@@ -31,8 +30,8 @@ func NewRecorder() recorder.Recorder {
 	}
 }
 
-func (s *IDNRecorder) GetLives() ([]*models.Live, error) {
-	lives := make([]*models.Live, 0)
+func (s *IDNRecorder) GetLives() ([]*recorder.Live, error) {
+	lives := make([]*recorder.Live, 0)
 
 	page := 1
 	for {
@@ -80,7 +79,7 @@ func (s *IDNRecorder) GetLives() ([]*models.Live, error) {
 			return nil, err
 		}
 
-		var idnResponses models.IDNResponses
+		var idnResponses IDNResponses
 		err = json.Unmarshal(body, &idnResponses)
 		if err != nil {
 			return nil, err
@@ -105,15 +104,15 @@ func (s *IDNRecorder) GetLives() ([]*models.Live, error) {
 	return lives, nil
 }
 
-func (s *IDNRecorder) GetLive(url string) (*models.Live, error) {
+func (s *IDNRecorder) GetLive(url string) (*recorder.Live, error) {
 	return nil, nil
 }
 
-func (s *IDNRecorder) GetStreamingUrl(live *models.Live) (string, error) {
+func (s *IDNRecorder) GetStreamingUrl(live *recorder.Live) (string, error) {
 	return live.StreamingUrl, nil
 }
 
-func (s *IDNRecorder) Record(live *models.Live, outputPath string) error {
+func (s *IDNRecorder) Record(live *recorder.Live, outputPath string) error {
 	downloadInfo := utils.DownloadHLS(live.StreamingUrl, &outputPath)
 	if downloadInfo == nil {
 		return fmt.Errorf("failed to download hls: %v", live.StreamingUrl)
